@@ -275,7 +275,8 @@ export async function generateLayoutProposal(
 export async function generateCharacterSheet(
     referenceImagesBase64: string[],
     characterName: string,
-    colorMode: 'color' | 'monochrome'
+    colorMode: 'color' | 'monochrome',
+    nudeMode = false
 ): Promise<string> {
     const imageParts = referenceImagesBase64.map(base64 => {
         const mimeType = base64.match(/data:(image\/.*?);/)?.[1] || 'image/png';
@@ -292,6 +293,7 @@ export async function generateCharacterSheet(
             - **顶行（头像）：**三个头像，显示不同视角和表情（例如侧视、正视中性表情、正视微笑）。
             - **底行（全身）：**三个全身视角（正面、侧面和背面）。
         4.  **输出：**仅生成最终角色表作为单一图像。不要在回应中包含任何文字、标签、名称、描述或解释。输出必须是图像，别无其他。
+        ${nudeMode ? `5. **成人艺术人体参考：**角色明确为年满18岁的成年人。以非色情的学院派人体绘画方式呈现自然裸体，用于解剖、比例和姿态参考。姿势保持中性，不得出现性行为、挑逗姿势、恋物元素或任何年轻化特征。` : ''}
     `;
 
     const contents = {
@@ -330,7 +332,8 @@ export async function generateCharacterFromReference(
     referenceSheetImagesBase64: string[],
     characterName: string,
     characterConcept: string,
-    colorMode: 'color' | 'monochrome'
+    colorMode: 'color' | 'monochrome',
+    nudeMode = false
 ): Promise<string> {
     const imageParts = referenceSheetImagesBase64.map(base64 => {
         const mimeType = base64.match(/data:(image\/.*?);/)?.[1] || 'image/png';
@@ -349,6 +352,7 @@ export async function generateCharacterFromReference(
             - **顶行（头像）：**三个头像，显示不同视角和表情（例如侧视、正视中性表情、正视微笑）。
             - **底行（全身）：**三个全身视角（正面、侧面和背面）。
         6.  **输出：**仅生成最终角色表作为单一图像。不要在回应中包含任何文字、标签、名称、描述或解释。输出必须是图像，别无其他。
+        ${nudeMode ? `7. **成人艺术人体参考：**新角色明确为年满18岁的成年人。以非色情的学院派人体绘画方式呈现自然裸体，用于解剖、比例和姿态参考。姿势保持中性，不得出现性行为、挑逗姿势、恋物元素或任何年轻化特征。` : ''}
     `;
 
     const contents = {

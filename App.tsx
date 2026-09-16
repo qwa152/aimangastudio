@@ -606,7 +606,7 @@ export default function App(): React.ReactElement {
   const anyLoading = isLoading || isColoring || isSuggestingLayout || isSuggestingStory || assistantModeState?.isActive || isAnalyzing;
 
   return (
-    <div className="flex flex-col h-screen font-sans bg-gray-50 text-gray-800">
+    <div className="studio-shell flex flex-col h-screen bg-gray-50 text-gray-800">
       <Header 
         isSidebarOpen={isSidebarOpen} 
         onToggleSidebar={() => setIsSidebarOpen(p => !p)}
@@ -677,13 +677,13 @@ export default function App(): React.ReactElement {
             }}
         />
       )}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="studio-workspace flex flex-1 overflow-hidden">
         {currentView === 'video-producer' ? (
           <VideoProducer characters={characters} pages={pages} />
         ) : (
           <>
-            <div ref={editorAreaRef} className="flex flex-1 bg-gray-50">
-              <aside className={`w-64 bg-white p-4 border-r border-gray-200 flex-col gap-8 flex-shrink-0 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'flex' : 'hidden'}`}>
+            <div ref={editorAreaRef} className="studio-editor-row flex flex-1 bg-gray-50">
+              <aside className={`studio-sidebar w-64 bg-white p-4 border-r border-gray-200 flex-col gap-8 flex-shrink-0 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'flex' : 'hidden'}`}>
                 <div>
                   <h3 className="font-bold text-sm mb-2 text-gray-500 tracking-wider uppercase">{t('pages')}</h3>
                   <div className="mb-4 relative">
@@ -773,7 +773,7 @@ export default function App(): React.ReactElement {
                 </div>
               </aside>
 
-              <main className="flex-1 p-4 lg:p-6 overflow-auto relative">
+              <main className="studio-canvas flex-1 p-4 lg:p-6 overflow-auto relative">
                 {viewMode === 'result' && currentPage.generatedImage && currentPage.panelLayoutImage ? (
                   <ComparisonViewer 
                       beforeImage={currentPage.panelLayoutImage}
@@ -808,7 +808,7 @@ export default function App(): React.ReactElement {
                 )}
               </main>
             </div>
-            <aside className="w-96 bg-white p-6 border-l border-gray-200 flex flex-col gap-6 overflow-y-auto flex-shrink-0">
+            <aside className="studio-control-panel w-96 bg-white p-6 border-l border-gray-200 flex flex-col gap-6 overflow-y-auto flex-shrink-0">
               {viewMode === 'result' && currentPage.generatedImage && !error ? (
                 <ResultDisplay
                   isLoading={isLoading}

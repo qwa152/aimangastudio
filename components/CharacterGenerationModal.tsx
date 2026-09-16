@@ -19,6 +19,8 @@ type CharacterDraft = {
     referenceCharacterIds: string[];
     referenceImages: string[];
     sheetColorMode: 'color' | 'monochrome';
+    nudeMode: boolean;
+    adultConfirmed: boolean;
     generatedSheet: string | null;
     isGenerating: boolean;
     isEditing: boolean;
@@ -35,6 +37,8 @@ const createNewDraft = (): CharacterDraft => ({
   referenceCharacterIds: [],
   referenceImages: [],
   sheetColorMode: 'monochrome',
+  nudeMode: false,
+  adultConfirmed: false,
   generatedSheet: null,
   isGenerating: false,
   isEditing: false,
@@ -91,20 +95,24 @@ export function CharacterGenerationModal({ onClose, onSave, characters }: Charac
       handleUpdateDraft(id, { error: t('characterNamePlaceholder') });
       return;
     }
+    if (draft.nudeMode && !draft.adultConfirmed) {
+      handleUpdateDraft(id, { error: t('adultConfirmationRequired') });
+      return;
+    }
     handleUpdateDraft(id, { isGenerating: true, error: null, generatedSheet: null });
     
     try {
       let result: string;
       if (draft.creationMode === 'new') {
         if (draft.referenceImages.length === 0) throw new Error(t('characterNameAndImageError'));
-        result = await generateCharacterSheet(draft.referenceImages, draft.name, draft.sheetColorMode);
+        result = await generateCharacterSheet(draft.referenceImages, draft.name, draft.sheetColorMode, draft.nudeMode);
       } else { // fromReference
         if (draft.referenceCharacterIds.length === 0) throw new Error(t('referenceCharacterError'));
         if (!draft.concept) throw new Error(t('characterConceptError'));
         const refChars = characters.filter(c => draft.referenceCharacterIds.includes(c.id));
         if (refChars.length === 0) throw new Error('Reference characters not found.');
         const refSheetImages = refChars.map(c => c.sheetImage);
-        result = await generateCharacterFromReference(refSheetImages, draft.name, draft.concept, draft.sheetColorMode);
+        result = await generateCharacterFromReference(refSheetImages, draft.name, draft.concept, draft.sheetColorMode, draft.nudeMode);
       }
       handleUpdateDraft(id, { generatedSheet: result, isGenerating: false });
     } catch (e) {
@@ -114,7 +122,7 @@ export function CharacterGenerationModal({ onClose, onSave, characters }: Charac
 
   const handleBatchGenerate = async () => {
     setIsBatchGenerating(true);
-    const draftsToGenerate = drafts.filter(d => !d.generatedSheet && d.name && (d.referenceImages.length > 0 || (d.creationMode === 'fromReference' && d.referenceCharacterIds.length > 0 && d.concept)));
+    const draftsToGenerate = drafts.filter(d => !d.generatedSheet && d.name && (!d.nudeMode || d.adultConfirmed) && (d.referenceImages.length > 0 || (d.creationMode === 'fromReference' && d.referenceCharacterIds.length > 0 && d.concept)));
     await Promise.all(draftsToGenerate.map(d => handleGenerate(d.id)));
     setIsBatchGenerating(false);
   };
@@ -166,7 +174,7 @@ export function CharacterGenerationModal({ onClose, onSave, characters }: Charac
   };
 
   const hasUnsavedDrafts = drafts.length > 0;
-  const readyToGenerate = drafts.some(d => d.name && (d.referenceImages.length > 0 || (d.creationMode === 'fromReference' && d.referenceCharacterIds.length > 0 && d.concept)));
+  const readyToGenerate = drafts.some(d => d.name && (!d.nudeMode || d.adultConfirmed) && (d.referenceImages.length > 0 || (d.creationMode === 'fromReference' && d.referenceCharacterIds.length > 0 && d.concept)));
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -275,7 +283,14 @@ export function CharacterGenerationModal({ onClose, onSave, characters }: Charac
                                             <button onClick={() => handleUpdateDraft(draft.id, { sheetColorMode: 'monochrome' })} className={`w-1/2 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${draft.sheetColorMode === 'monochrome' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:bg-gray-200'}`}> {t('monochrome')} </button>
                                             <button onClick={() => handleUpdateDraft(draft.id, { sheetColorMode: 'color' })} className={`w-1/2 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${draft.sheetColorMode === 'color' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:bg-gray-200'}`}> {t('color')} </button>
                                         </div>
-                                        <button onClick={() => handleGenerate(draft.id)} disabled={draft.isGenerating || !draft.name || (draft.creationMode === 'new' && draft.referenceImages.length === 0) || (draft.creationMode === 'fromReference' && (!draft.referenceCharacterIds.length || !draft.concept)) } className="w-full bg-indigo-600 text-white font-bold py-2 rounded-lg hover:bg-indigo-500 disabled:bg-gray-400">
+                                        <div className={`adult-art-option ${draft.nudeMode ? 'enabled' : ''}`}>
+                                          <label className="flex items-start gap-2 cursor-pointer">
+                                            <input type="checkbox" checked={draft.nudeMode} onChange={(e) => handleUpdateDraft(draft.id, { nudeMode: e.target.checked, adultConfirmed: e.target.checked ? draft.adultConfirmed : false, error: null })} className="mt-0.5 h-4 w-4" />
+                                            <span><strong>{t('adultNudeMode')}</strong><small>{t('adultNudeModeDescription')}</small></span>
+                                          </label>
+                                          {draft.nudeMode && <label className="adult-confirmation"><input type="checkbox" checked={draft.adultConfirmed} onChange={(e) => handleUpdateDraft(draft.id, { adultConfirmed: e.target.checked, error: null })} /> <span>{t('confirmAdultCharacter')}</span></label>}
+                                        </div>
+                                        <button onClick={() => handleGenerate(draft.id)} disabled={draft.isGenerating || !draft.name || (draft.nudeMode && !draft.adultConfirmed) || (draft.creationMode === 'new' && draft.referenceImages.length === 0) || (draft.creationMode === 'fromReference' && (!draft.referenceCharacterIds.length || !draft.concept)) } className="w-full bg-indigo-600 text-white font-bold py-2 rounded-lg hover:bg-indigo-500 disabled:bg-gray-400">
                                             {draft.isGenerating ? t('generating') : t('generateSheet')}
                                         </button>
                                     </div>
